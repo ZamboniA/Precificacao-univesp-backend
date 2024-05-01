@@ -17,8 +17,6 @@ const MousseSchema = new Schema({
 
 const Mousse = mongoose.model('Mousse', MousseSchema);
 
-
-
 module.exports = {
     Mousse
 };
