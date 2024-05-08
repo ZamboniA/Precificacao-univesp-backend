@@ -1,14 +1,32 @@
 const { Router } = require ("express");
 const { PaoDeMel } = require("../../models/PaoDeMelSchema");
 const router = Router();
+const multer = require("multer");
 const path = require("path");
 
 
+const storage = multer.diskStorage({
+    destination: path.resolve(__dirname, '../uploads'),
+    filename: (req, file, callback) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+        const extname = path.extname(file.originalname)
+        const filename = file.fieldname + '-' + uniqueSuffix + extname
+        callback(null, filename)
+    }
+});
+
+const upload = multer({ storage: storage });
 
 
-router.post("/paodemel", async (req, res) => {
+router.post("/paodemel", upload.single("imagem"), async (req, res) => {
     try {
         const { nome, preco, ingredientes = {}, dataUpdate } = req.body;
+
+        let imagem = null;
+        if (req.file) { 
+            imagem = req.file.filename;
+        };
+
         const paodemel = new PaoDeMel ({
             nome,
             ingredientes: {
@@ -25,8 +43,7 @@ router.post("/paodemel", async (req, res) => {
                 ovos: ingredientes.ovos
             },
             preco,
-            // imagem,
-            // dataUpdate
+            imagem: req.file ? req.file.path : null,
         });
 
 
@@ -84,10 +101,10 @@ router.delete("/paodemel/:id", async (req, res) => {
     }
 });
 
-router.put("/paodemel/:id", async (req, res) => {
+router.put("/paodemel/:id", upload.single('imagem'), async (req, res) => {
     try {
-        const { ingredientes = {}, preco, dataUpdate } = req.body;
-
+        const { ingredientes = {}, preco } = req.body;
+        
         const updatedFields = {
             ingredientes: {
                 mel: ingredientes.mel,
@@ -103,8 +120,7 @@ router.put("/paodemel/:id", async (req, res) => {
                 ovos: ingredientes.ovos
             },
             preco,
-            // imagem,
-            // dataUpdate
+            imagem: req.file ? req.file.path : null,
         };
 
         const updatedPaoDeMel = await PaoDeMel.findByIdAndUpdate(req.params.id, updatedFields, { new: true });
@@ -116,9 +132,12 @@ router.put("/paodemel/:id", async (req, res) => {
         res.status(200).json(updatedPaoDeMel);
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Ocorreu um erro ao atualizar o pão de mel." });;
+        res.status(500).json({ message: "Ocorreu um erro ao atualizar o pão de mel." });
     }
 });
+
+
+
 
 
 

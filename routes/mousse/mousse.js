@@ -1,12 +1,24 @@
 const { Router } = require ("express");
 const { Mousse } = require("../../models/MousseSchema");
 const router = Router();
+const multer = require("multer");
 const path = require("path");
 
 
+const storage = multer.diskStorage({
+    destination: path.resolve(__dirname, '../uploads'),
+    filename: (req, file, callback) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+        const extname = path.extname(file.originalname)
+        const filename = file.fieldname + '-' + uniqueSuffix + extname
+        callback(null, filename)
+    }
+});
+
+const upload = multer({ storage: storage });
 
 
-router.post("/mousse", async (req, res) => {
+router.post("/mousse", upload.single('imagem'), async (req, res) => {
     try {
         const { nome, preco, ingredientes = {}, dataUpdate } = req.body;
         const mousse = new Mousse ({
@@ -18,8 +30,8 @@ router.post("/mousse", async (req, res) => {
                 gelatina: ingredientes.gelatina,
             },
             preco,
-            // imagem,
-            // dataUpdate
+            imagem,
+            dataUpdate
         });
 
 
@@ -88,7 +100,8 @@ router.put("/mousse/:id", async (req, res) => {
                 gelatina: ingredientes.gelatina,
             },
             preco,
-            // dataUpdate
+            imagem,
+            dataUpdate
         };
 
         const updatedMousse = await Mousse.findByIdAndUpdate(req.params.id, updatedFields, { new: true });

@@ -3,10 +3,13 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
+const path = require('path');
 const app = express();
 app.use(express.json());
 
 mongoose.connect(process.env.MONGODB_URL);
+
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 const brownieRoutes = require("./routes/brownie/brownie");
 const mousseRoutes = require("./routes/mousse/mousse");
@@ -16,7 +19,7 @@ const todosItens = require("./routes/todosItens/todosItens");
 app.use(cors());
 
 
-app.use(brownieRoutes);
+app.use(brownieRoutes); 
 app.use(mousseRoutes);
 app.use(paoDeMelRoutes);
 app.use(todosItens);

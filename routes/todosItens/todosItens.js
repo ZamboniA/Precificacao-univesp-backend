@@ -1,21 +1,32 @@
-const { Router } = require ("express");
+const { Router } = require("express");
 const router = Router();
 const { PaoDeMel } = require("../../models/PaoDeMelSchema");
 const { Mousse } = require("../../models/MousseSchema");
 const { Brownie } = require("../../models/BrownieSchema");
 
-
-
-
-
 router.get("/todos-itens", async (req, res) => {
     try {
-
         const brownies = await Brownie.find();
         const mousses = await Mousse.find();
         const paesDeMel = await PaoDeMel.find();
 
-        const allItems = [...brownies, ...mousses, ...paesDeMel];
+
+        const browniesComImagens = brownies.map(item => ({
+            ...item._doc,
+            imagemUrl: req.protocol + '://' + req.get('host') + '/uploads/' + item.imagem
+        }));
+
+        const moussesComImagens = mousses.map(item => ({
+            ...item._doc,
+            imagemUrl: req.protocol + '://' + req.get('host') + '/uploads/' + item.imagem
+        }));
+
+        const paesDeMelComImagens = paesDeMel.map(item => ({
+            ...item._doc,
+            imagemUrl: req.protocol + '://' + req.get('host') + '/../uploads/' + item.imagem
+        }));
+
+        const allItems = [...browniesComImagens, ...moussesComImagens, ...paesDeMelComImagens];
 
         res.status(200).json(allItems);
     } catch (error) {

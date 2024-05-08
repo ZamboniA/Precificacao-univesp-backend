@@ -11,8 +11,11 @@ const MousseSchema = new Schema({
         gelatina: Number,
     },
     preco: Number,
-    imagem: Object,
-    dataUpdate: Date
+    imagem: String,
+    dataUpdate: {
+        type: Date,
+        default: Date.now
+    }
 });
 
 const Mousse = mongoose.model('Mousse', MousseSchema);

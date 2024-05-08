@@ -17,8 +17,11 @@ const PaoDeMelSchema = new Schema({
         ovos: Number
     },
     preco: Number,
-    // imagem: Object,
-    // dataUpdate: Date
+    imagem: String,
+    dataUpdate: {
+        type: Date,
+        default: Date.now
+    }
 });
 
 const PaoDeMel = mongoose.model('PaoDeMel', PaoDeMelSchema);

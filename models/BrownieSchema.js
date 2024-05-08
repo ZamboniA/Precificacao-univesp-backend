@@ -12,8 +12,11 @@ const BrownieSchema = new Schema({
         ovos: Number
     },
     preco: Number,
-    // imagem: Object,
-    // dataUpdate: Date
+    imagem: String,
+    dataUpdate: {
+        type: Date,
+        default: Date.now
+    }
 });
 
 const Brownie = mongoose.model('Brownie', BrownieSchema);

@@ -1,12 +1,24 @@
 const { Router } = require ("express");
 const { Brownie } = require("../../models/BrownieSchema");
 const router = Router();
+const multer = require("multer");
 const path = require("path");
 
 
+const storage = multer.diskStorage({
+    destination: path.resolve(__dirname, '../uploads'),
+    filename: (req, file, callback) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+        const extname = path.extname(file.originalname)
+        const filename = file.fieldname + '-' + uniqueSuffix + extname
+        callback(null, filename)
+    }
+});
+
+const upload = multer({ storage: storage });
 
 
-router.post("/brownie", async (req, res) => {
+router.post("/brownie", upload.single('imagem'), async (req, res) => {
     try {
         const { nome, preco, ingredientes = {}, dataUpdate } = req.body;
         const brownie = new Brownie ({
@@ -20,8 +32,8 @@ router.post("/brownie", async (req, res) => {
                 ovos: ingredientes.ovos
             },
             preco,
-            // imagem,
-            // dataUpdate
+            imagem,
+            dataUpdate
         });
 
 
@@ -37,7 +49,7 @@ router.post("/brownie", async (req, res) => {
 
 router.get("/brownie", async (req, res) => {
     try {
-        const brownies = await Brownie.find(); // Buscar todos os brownies no banco de dados
+        const brownies = await Brownie.find(); 
 
         res.status(200).json(brownies);
     } catch (error) {
@@ -48,7 +60,7 @@ router.get("/brownie", async (req, res) => {
 
 router.get("/brownie/:id", async (req, res) => {
     try {
-        const brownie = await Brownie.findById(req.params.id); // Buscar brownie pelo ID
+        const brownie = await Brownie.findById(req.params.id);
 
         if (!brownie) {
             return res.status(404).json({ message: "Brownie não encontrado." });
@@ -92,7 +104,8 @@ router.put("/brownie/:id", async (req, res) => {
                 ovos: ingredientes.ovos
             },
             preco,
-            // dataUpdate
+            imagem,
+            dataUpdate
         };
 
         const updatedBrownie = await Brownie.findByIdAndUpdate(req.params.id, updatedFields, { new: true });
