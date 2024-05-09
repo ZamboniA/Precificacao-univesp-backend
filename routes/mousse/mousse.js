@@ -10,7 +10,7 @@ const storage = multer.diskStorage({
     filename: (req, file, callback) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
         const extname = path.extname(file.originalname)
-        const filename = file.fieldname + '-' + uniqueSuffix + extname
+        const filename = uniqueSuffix + extname
         callback(null, filename)
     }
 });
@@ -20,9 +20,10 @@ const upload = multer({ storage: storage });
 
 router.post("/mousse", upload.single('imagem'), async (req, res) => {
     try {
-        const { nome, preco, ingredientes = {}, dataUpdate } = req.body;
+        const { nome, tipo, preco, ingredientes = {}, dataUpdate } = req.body;
         const mousse = new Mousse ({
             nome,
+            tipo,
             ingredientes: {
                 leiteCondensado: ingredientes.leiteCondensado,
                 cremeDeLeite: ingredientes.cremeDeLeite,
@@ -90,21 +91,29 @@ router.delete("/mousse/:id", async (req, res) => {
 
 router.put("/mousse/:id", async (req, res) => {
     try {
-        const { ingredientes = {}, preco, dataUpdate } = req.body;
+        // let imagemUrl = null;
+        // if (req.file) {
+        //     imagemUrl = req.file.filename;
+        // }
+
+        const { tipo, ingredientes = {}, preco } = req.body;
 
         const updatedFields = {
+            // tipo,   
             ingredientes: {
                 leiteCondensado: ingredientes.leiteCondensado,
                 cremeDeLeite: ingredientes.cremeDeLeite,
                 maracuja: ingredientes.maracuja,
                 gelatina: ingredientes.gelatina,
             },
-            preco,
-            imagem,
-            dataUpdate
+            // preco,
+            // imagem: imagemUrl,
         };
 
+        console.log(updatedFields);
         const updatedMousse = await Mousse.findByIdAndUpdate(req.params.id, updatedFields, { new: true });
+
+
 
         if (!updatedMousse) {
             return res.status(404).json({ message: "Moussie não encontrado." });
@@ -113,7 +122,7 @@ router.put("/mousse/:id", async (req, res) => {
         res.status(200).json(updatedMousse);
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Ocorreu um erro ao atualizar o moussie." });;
+        res.status(500).json({ message: "Ocorreu um erro ao atualizar o mousse." });;
     }
 });
 

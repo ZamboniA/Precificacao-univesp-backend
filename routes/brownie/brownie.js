@@ -10,7 +10,7 @@ const storage = multer.diskStorage({
     filename: (req, file, callback) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
         const extname = path.extname(file.originalname)
-        const filename = file.fieldname + '-' + uniqueSuffix + extname
+        const filename = uniqueSuffix + extname
         callback(null, filename)
     }
 });
@@ -20,9 +20,10 @@ const upload = multer({ storage: storage });
 
 router.post("/brownie", upload.single('imagem'), async (req, res) => {
     try {
-        const { nome, preco, ingredientes = {}, dataUpdate } = req.body;
+        const { nome, tipo, preco, ingredientes = {}, dataUpdate } = req.body;
         const brownie = new Brownie ({
             nome,
+            tipo,
             ingredientes: {
                 chocolateMeioAmargo: ingredientes.chocolateMeioAmargo,
                 manteiga: ingredientes.manteiga,
@@ -90,11 +91,19 @@ router.delete("/brownie/:id", async (req, res) => {
     }
 });
 
-router.put("/brownie/:id", async (req, res) => {
+router.put("/brownie/:id", 
+// upload.single('imagem'),
+async (req, res) => {
     try {
-        const { ingredientes = {}, preco, dataUpdate } = req.body;
+        // let imagemUrl = null;
+        // if (req.file) {
+        //     imagemUrl = req.file.filename;
+        // }
+
+        const { tipo, ingredientes = {}, preco } = req.body;
 
         const updatedFields = {
+            // tipo,
             ingredientes: {
                 chocolateMeioAmargo: ingredientes.chocolateMeioAmargo,
                 manteiga: ingredientes.manteiga,
@@ -103,13 +112,13 @@ router.put("/brownie/:id", async (req, res) => {
                 sal: ingredientes.sal,
                 ovos: ingredientes.ovos
             },
-            preco,
-            imagem,
-            dataUpdate
+            // preco,
+            // imagem: imagemUrl,
         };
 
         const updatedBrownie = await Brownie.findByIdAndUpdate(req.params.id, updatedFields, { new: true });
 
+        console.log(updatedBrownie)
         if (!updatedBrownie) {
             return res.status(404).json({ message: "Brownie não encontrado." });
         }

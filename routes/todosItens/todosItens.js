@@ -13,19 +13,19 @@ router.get("/todos-itens", async (req, res) => {
 
         const browniesComImagens = brownies.map(item => ({
             ...item._doc,
-            imagemUrl: req.protocol + '://' + req.get('host') + '/uploads/' + item.imagem
+            imagemUrl: `${process.env.HOST}/uploads/${item.imagem}`
         }));
 
         const moussesComImagens = mousses.map(item => ({
             ...item._doc,
-            imagemUrl: req.protocol + '://' + req.get('host') + '/uploads/' + item.imagem
+            imagemUrl: `${process.env.HOST}/uploads/${item.imagem}`
         }));
 
         const paesDeMelComImagens = paesDeMel.map(item => ({
             ...item._doc,
-            imagemUrl: req.protocol + '://' + req.get('host') + '/../uploads/' + item.imagem
+            imagemUrl: `${process.env.HOST}/uploads/${item.imagem}`
         }));
-
+        console.log(process.env.HOST);
         const allItems = [...browniesComImagens, ...moussesComImagens, ...paesDeMelComImagens];
 
         res.status(200).json(allItems);

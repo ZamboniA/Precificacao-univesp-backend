@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 
 const BrownieSchema = new Schema({
     nome: String,
+    tipo: String,
     ingredientes: {
         chocolateMeioAmargo: Number,
         manteiga: Number,

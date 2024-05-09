@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 
 const PaoDeMelSchema = new Schema({
     nome: String,
+    tipo: String,
     ingredientes: {
         mel: Number,
         manteiga: Number,

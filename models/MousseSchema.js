@@ -4,6 +4,7 @@ const Schema = mongoose.Schema;
 
 const MousseSchema = new Schema({
     nome: String,
+    tipo: String,
     ingredientes: {
         leiteCondensado: Number,
         cremeDeLeite: Number,

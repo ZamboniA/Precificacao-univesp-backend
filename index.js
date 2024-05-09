@@ -9,7 +9,7 @@ app.use(express.json());
 
 mongoose.connect(process.env.MONGODB_URL);
 
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '/routes/uploads')));
 
 const brownieRoutes = require("./routes/brownie/brownie");
 const mousseRoutes = require("./routes/mousse/mousse");
