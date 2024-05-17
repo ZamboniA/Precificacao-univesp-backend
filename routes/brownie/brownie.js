@@ -130,6 +130,25 @@ async (req, res) => {
     }
 });
 
+router.put("/brownie/preco/:id", async (req, res) => {
+    try {
+        const preco = req.body.preco;
+
+        const browniePreco ={
+            preco
+        }
+        
+        const updatePreco = await Brownie.findByIdAndUpdate(req.params.id, browniePreco, { new: true});
+        
+        if (!updatePreco){
+            return res.status(404).json({ message: "Brownie não encontrado."});
+        }
+        res.status(200).json(updatePreco);
+    } catch (error) {
+        res.status(500).json({ message: "Ocorreu um erro ao atualizar o brownie." });
+    }
+})
+
 
 
 module.exports = router;

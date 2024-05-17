@@ -142,6 +142,25 @@ router.put("/paodemel/:id", async (req, res) => {
 });
 
 
+router.put("/paodemel/preco/:id", async (req, res) => {
+    try {
+        const preco = req.body.preco;
+
+        const paodemelPreco ={
+            preco
+        }
+        
+        const updatePreco = await PaoDeMel.findByIdAndUpdate(req.params.id, paodemelPreco, { new: true});
+        
+        if (!updatePreco){
+            return res.status(404).json({ message: "Pão de mel não encontrado."});
+        }
+        res.status(200).json(updatePreco);
+    } catch (error) {
+        res.status(500).json({ message: "Ocorreu um erro ao atualizar o pão de mel." });
+    }
+})
+
 
 
 

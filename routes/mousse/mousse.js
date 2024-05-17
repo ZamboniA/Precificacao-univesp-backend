@@ -127,5 +127,24 @@ router.put("/mousse/:id", async (req, res) => {
 });
 
 
+router.put("/mousse/preco/:id", async (req, res) => {
+    try {
+        const preco = req.body.preco;
+
+        const moussePreco ={
+            preco
+        }
+        
+        const updatePreco = await Mousse.findByIdAndUpdate(req.params.id, moussePreco, { new: true});
+        
+        if (!updatePreco){
+            return res.status(404).json({ message: "mousse não encontrado."});
+        }
+        res.status(200).json(updatePreco);
+    } catch (error) {
+        res.status(500).json({ message: "Ocorreu um erro ao atualizar o mousse." });
+    }
+})
+
 
 module.exports = router;
