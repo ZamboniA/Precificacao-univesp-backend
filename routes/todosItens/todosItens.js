@@ -4,28 +4,27 @@ const { PaoDeMel } = require("../../models/PaoDeMelSchema");
 const { Mousse } = require("../../models/MousseSchema");
 const { Brownie } = require("../../models/BrownieSchema");
 
-router.get("/todos-itens", async (req, res) => {
+router.get("/", async (req, res) => {
     try {
         const brownies = await Brownie.find();
         const mousses = await Mousse.find();
         const paesDeMel = await PaoDeMel.find();
 
-
         const browniesComImagens = brownies.map(item => ({
             ...item._doc,
-            imagemUrl: `${process.env.HOST}/uploads/${item.imagem}`
+            imagemUrl: item.imagem ? `${process.env.HOST}/uploads/${item.imagem}` : null
         }));
 
         const moussesComImagens = mousses.map(item => ({
             ...item._doc,
-            imagemUrl: `${process.env.HOST}/uploads/${item.imagem}`
+            imagemUrl: item.imagem ? `${process.env.HOST}/uploads/${item.imagem}` : null
         }));
 
         const paesDeMelComImagens = paesDeMel.map(item => ({
             ...item._doc,
-            imagemUrl: `${process.env.HOST}/uploads/${item.imagem}`
+            imagemUrl: item.imagem ? `${process.env.HOST}/uploads/${item.imagem}` : null
         }));
-        console.log(process.env.HOST);
+
         const allItems = [...browniesComImagens, ...moussesComImagens, ...paesDeMelComImagens];
 
         res.status(200).json(allItems);

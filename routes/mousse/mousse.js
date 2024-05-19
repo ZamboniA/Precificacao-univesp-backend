@@ -1,9 +1,8 @@
-const { Router } = require ("express");
+const { Router } = require("express");
 const { Mousse } = require("../../models/MousseSchema");
 const router = Router();
 const multer = require("multer");
 const path = require("path");
-
 
 function calcularPrecoProporcional(precos) {
     const quantidadesUtilizadas = {
@@ -12,7 +11,6 @@ function calcularPrecoProporcional(precos) {
         maracuja: 500,         // em ml
         gelatina: 1            // unidade
     };
-
 
     const quantidadesTotais = {
         leiteCondensado: 1,    // unidade
@@ -28,7 +26,6 @@ function calcularPrecoProporcional(precos) {
         let quantidadeTotal = quantidadesTotais[item];
 
         let precoProporcional = (precoTotal / quantidadeTotal) * quantidadeUtilizada;
-
 
         resultado[item] = parseFloat(precoProporcional).toFixed(2);
     }
@@ -47,11 +44,16 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-
-router.post("/mousse", upload.single('imagem'), async (req, res) => {
+router.post("/", upload.single('imagem'), async (req, res) => {
     try {
         const { nome, tipo, preco, ingredientes = {}, dataUpdate } = req.body;
-        const mousse = new Mousse ({
+
+        let imagem = null;
+        if (req.file) {
+            imagem = req.file.filename;
+        }
+
+        const mousse = new Mousse({
             nome,
             tipo,
             ingredientes: {
@@ -61,10 +63,9 @@ router.post("/mousse", upload.single('imagem'), async (req, res) => {
                 gelatina: ingredientes.gelatina,
             },
             preco,
-            // imagem,
+            imagem,
             dataUpdate
         });
-
 
         const savedMousse = await mousse.save();
 
@@ -72,28 +73,28 @@ router.post("/mousse", upload.single('imagem'), async (req, res) => {
         res.status(201).json(savedMousse)
     } catch (error) {
         console.log(error);
-        res.status(500).json({message: "Ocorreu um erro."});
+        res.status(500).json({ message: "Ocorreu um erro ao salvar o mousse." });
     }
 });
 
-router.get("/mousse", async (req, res) => {
+router.get("/", async (req, res) => {
     try {
-        const mousse = await Mousse.find(); 
-
-        res.status(200).json(mousse);
+        const mousses = await Mousse.find();
+        res.status(200).json(mousses);
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Ocorreu um erro ao buscar os mousses." });
     }
 });
 
-router.get("/mousse/ingredientes/:id", async (req, res) => {
+router.get("/ingredientes/:id", async (req, res) => {
     try {
         const mousse = await Mousse.findById(req.params.id);
 
         if (!mousse) {
             return res.status(404).json({ message: "Mousse não encontrado." });
         }
+
         const precosIngredientes = mousse.ingredientes;
 
         const precosCalculados = calcularPrecoProporcional(precosIngredientes);
@@ -105,7 +106,7 @@ router.get("/mousse/ingredientes/:id", async (req, res) => {
     }
 });
 
-router.get("/mousse/:id", async (req, res) => {
+router.get("/:id", async (req, res) => {
     try {
         const mousse = await Mousse.findById(req.params.id);
 
@@ -120,7 +121,7 @@ router.get("/mousse/:id", async (req, res) => {
     }
 });
 
-router.delete("/mousse/:id", async (req, res) => {
+router.delete("/:id", async (req, res) => {
     try {
         const mousse = await Mousse.findById(req.params.id);
 
@@ -137,28 +138,21 @@ router.delete("/mousse/:id", async (req, res) => {
     }
 });
 
-router.put("/mousse/:id", async (req, res) => {
+router.put("/:id", async (req, res) => {
     try {
-        // let imagemUrl = null;
-        // if (req.file) {
-        //     imagemUrl = req.file.filename;
-        // }
-
         const { tipo, ingredientes = {}, preco } = req.body;
 
         const updatedFields = {
-            // tipo,
-            ingredientes: {  // Aqui está o problema
+            tipo,
+            ingredientes: {
                 leiteCondensado: ingredientes.leiteCondensado || null,
                 cremeDeLeite: ingredientes.cremeDeLeite || null,
                 maracuja: ingredientes.maracuja || null,
                 gelatina: ingredientes.gelatina || null,
             },
-            // preco,
-            // imagem: imagemUrl,
+            preco,
         };
 
-        console.log(updatedFields);
         const updatedMousse = await Mousse.findByIdAndUpdate(req.params.id, updatedFields, { new: true });
 
         if (!updatedMousse) {
@@ -172,26 +166,24 @@ router.put("/mousse/:id", async (req, res) => {
     }
 });
 
-
-
-router.put("/mousse/preco/:id", async (req, res) => {
+router.put("/preco/:id", async (req, res) => {
     try {
         const preco = req.body.preco;
 
-        const moussePreco ={
+        const moussePreco = {
             preco
+        };
+
+        const updatePreco = await Mousse.findByIdAndUpdate(req.params.id, moussePreco, { new: true });
+
+        if (!updatePreco) {
+            return res.status(404).json({ message: "Mousse não encontrado." });
         }
-        
-        const updatePreco = await Mousse.findByIdAndUpdate(req.params.id, moussePreco, { new: true});
-        
-        if (!updatePreco){
-            return res.status(404).json({ message: "mousse não encontrado."});
-        }
+
         res.status(200).json(updatePreco);
     } catch (error) {
         res.status(500).json({ message: "Ocorreu um erro ao atualizar o mousse." });
     }
-})
-
+});
 
 module.exports = router;

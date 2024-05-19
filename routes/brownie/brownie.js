@@ -1,9 +1,8 @@
-const { Router } = require ("express");
+const { Router } = require("express");
 const { Brownie } = require("../../models/BrownieSchema");
 const router = Router();
 const multer = require("multer");
 const path = require("path");
-
 
 function calcularPrecoProporcional(precos) {
     const quantidadesUtilizadas = {
@@ -11,10 +10,9 @@ function calcularPrecoProporcional(precos) {
         manteiga: 250,            // em gramas
         acucar: 200,              // em gramas
         farinhaDeTrigo: 100,      // em gramas
-        sal: 2,                   // em grama
+        sal: 2,                   // em gramas
         ovos: 4                   // unidades
     };
-
 
     const quantidadesTotais = {
         chocolateMeioAmargo: 1000, // 1kg
@@ -33,12 +31,10 @@ function calcularPrecoProporcional(precos) {
 
         let precoProporcional = (precoTotal / quantidadeTotal) * quantidadeUtilizada;
 
-
         resultado[item] = parseFloat(precoProporcional).toFixed(2);
     }
     return resultado;
 }
-
 
 const storage = multer.diskStorage({
     destination: path.resolve(__dirname, '../uploads'),
@@ -52,11 +48,16 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-
-router.post("/brownie", upload.single('imagem'), async (req, res) => {
+router.post("/", upload.single('imagem'), async (req, res) => {
     try {
         const { nome, tipo, preco, ingredientes = {}, dataUpdate } = req.body;
-        const brownie = new Brownie ({
+
+        let imagem = null;
+        if (req.file) {
+            imagem = req.file.filename;
+        }
+
+        const brownie = new Brownie({
             nome,
             tipo,
             ingredientes: {
@@ -72,21 +73,19 @@ router.post("/brownie", upload.single('imagem'), async (req, res) => {
             dataUpdate
         });
 
-
         const savedBrownie = await brownie.save();
 
         console.log(savedBrownie);
-        res.status(201).json(savedBrownie)
+        res.status(201).json(savedBrownie);
     } catch (error) {
         console.log(error);
-        res.status(500).json({message: "Ocorreu um erro."});
+        res.status(500).json({ message: "Ocorreu um erro ao salvar o brownie." });
     }
 });
 
-router.get("/brownie", async (req, res) => {
+router.get("/", async (req, res) => {
     try {
-        const brownies = await Brownie.find(); 
-
+        const brownies = await Brownie.find();
         res.status(200).json(brownies);
     } catch (error) {
         console.log(error);
@@ -94,7 +93,7 @@ router.get("/brownie", async (req, res) => {
     }
 });
 
-router.get("/brownie/ingredientes/:id", async (req, res) => {
+router.get("/ingredientes/:id", async (req, res) => {
     try {
         const brownie = await Brownie.findById(req.params.id);
 
@@ -113,7 +112,7 @@ router.get("/brownie/ingredientes/:id", async (req, res) => {
     }
 });
 
-router.get("/brownie/:id", async (req, res) => {
+router.get("/:id", async (req, res) => {
     try {
         const brownie = await Brownie.findById(req.params.id);
 
@@ -128,7 +127,7 @@ router.get("/brownie/:id", async (req, res) => {
     }
 });
 
-router.delete("/brownie/:id", async (req, res) => {
+router.delete("/:id", async (req, res) => {
     try {
         const brownie = await Brownie.findById(req.params.id);
 
@@ -145,19 +144,12 @@ router.delete("/brownie/:id", async (req, res) => {
     }
 });
 
-router.put("/brownie/:id", 
-// upload.single('imagem'),
-async (req, res) => {
+router.put("/:id", async (req, res) => {
     try {
-        // let imagemUrl = null;
-        // if (req.file) {
-        //     imagemUrl = req.file.filename;
-        // }
-
         const { tipo, ingredientes = {}, preco } = req.body;
 
         const updatedFields = {
-            // tipo,
+            tipo,
             ingredientes: {
                 chocolateMeioAmargo: ingredientes.chocolateMeioAmargo,
                 manteiga: ingredientes.manteiga,
@@ -166,13 +158,11 @@ async (req, res) => {
                 sal: ingredientes.sal,
                 ovos: ingredientes.ovos
             },
-            // preco,
-            // imagem: imagemUrl,
+            preco,
         };
 
         const updatedBrownie = await Brownie.findByIdAndUpdate(req.params.id, updatedFields, { new: true });
-        
-        console.log(updatedBrownie)
+
         if (!updatedBrownie) {
             return res.status(404).json({ message: "Brownie não encontrado." });
         }
@@ -184,25 +174,24 @@ async (req, res) => {
     }
 });
 
-router.put("/brownie/preco/:id", async (req, res) => {
+router.put("/preco/:id", async (req, res) => {
     try {
         const preco = req.body.preco;
 
-        const browniePreco ={
+        const browniePreco = {
             preco
+        };
+
+        const updatePreco = await Brownie.findByIdAndUpdate(req.params.id, browniePreco, { new: true });
+
+        if (!updatePreco) {
+            return res.status(404).json({ message: "Brownie não encontrado." });
         }
-        
-        const updatePreco = await Brownie.findByIdAndUpdate(req.params.id, browniePreco, { new: true});
-        
-        if (!updatePreco){
-            return res.status(404).json({ message: "Brownie não encontrado."});
-        }
+
         res.status(200).json(updatePreco);
     } catch (error) {
         res.status(500).json({ message: "Ocorreu um erro ao atualizar o brownie." });
     }
-})
-
-
+});
 
 module.exports = router;

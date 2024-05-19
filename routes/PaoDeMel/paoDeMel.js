@@ -1,4 +1,4 @@
-const { Router } = require ("express");
+const { Router } = require("express");
 const { PaoDeMel } = require("../../models/PaoDeMelSchema");
 const router = Router();
 const multer = require("multer");
@@ -7,16 +7,16 @@ const path = require("path");
 function calcularPrecoProporcional(precos) {
     const quantidadesUtilizadas = {
         mel: 150,                   // em gramas
-        manteiga: 50,              // em gramas
-        leiteIntegral: 240,        // em ml
-        cacau: 20,                // em gramas
-        fermentoQuimico: 30,       // em gramas
-        canelaPo: 2,             // em gramas
-        cravoPo: 1,              // em gramas
+        manteiga: 50,               // em gramas
+        leiteIntegral: 240,         // em ml
+        cacau: 20,                  // em gramas
+        fermentoQuimico: 30,        // em gramas
+        canelaPo: 2,                // em gramas
+        cravoPo: 1,                 // em gramas
         acucar: 150,                // em gramas
-        farinhaDeTrigo: 240,       // em gramas
-        baunilha: 5,                   // em mL
-        ovos: 2                    // em unidades
+        farinhaDeTrigo: 240,        // em gramas
+        baunilha: 5,                // em mL
+        ovos: 2                     // em unidades
     };
 
     const quantidadesTotais = {
@@ -29,7 +29,7 @@ function calcularPrecoProporcional(precos) {
         cravoPo: 1000,              // quantidade total em gramas
         acucar: 1000,               // quantidade total em gramas
         farinhaDeTrigo: 1000,       // quantidade total em gramas
-        baunilha: 1000,                  // quantidade total em gramas
+        baunilha: 1000,             // quantidade total em gramas
         ovos: 12                    // quantidade total em unidades
     };
 
@@ -39,10 +39,7 @@ function calcularPrecoProporcional(precos) {
         let precoTotal = precos[item]; 
         let quantidadeTotal = quantidadesTotais[item];
 
-
         let precoProporcional = (precoTotal / quantidadeTotal) * quantidadeUtilizada;
-
-
         precoProporcional = parseFloat(precoProporcional.toFixed(2));
 
         resultado[item] = precoProporcional;
@@ -50,30 +47,28 @@ function calcularPrecoProporcional(precos) {
     return resultado;
 }
 
-
 const storage = multer.diskStorage({
     destination: path.resolve(__dirname, '../uploads'),
     filename: (req, file, callback) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-        const extname = path.extname(file.originalname)
-        const filename = uniqueSuffix + extname
-        callback(null, filename)
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const extname = path.extname(file.originalname);
+        const filename = uniqueSuffix + extname;
+        callback(null, filename);
     }
 });
 
 const upload = multer({ storage: storage });
 
-
-router.post("/paodemel", upload.single("imagem"), async (req, res) => {
+router.post("/", upload.single("imagem"), async (req, res) => {
     try {
-        const { nome,tipo, preco, ingredientes = {}, dataUpdate } = req.body;
+        const { nome, tipo, preco, ingredientes = {}, dataUpdate } = req.body;
 
         let imagem = null;
-        if (req.file) { 
+        if (req.file) {
             imagem = req.file.filename;
-        };
+        }
 
-        const paodemel = new PaoDeMel ({
+        const paodemel = new PaoDeMel({
             nome,
             tipo,
             ingredientes: {
@@ -91,24 +86,22 @@ router.post("/paodemel", upload.single("imagem"), async (req, res) => {
             },
             preco,
             imagem: req.file ? req.file.path : null,
+            dataUpdate
         });
-
 
         const savedPaodemel = await paodemel.save();
 
         console.log(savedPaodemel);
-        res.status(201).json(savedPaodemel)
+        res.status(201).json(savedPaodemel);
     } catch (error) {
         console.log(error);
-        res.status(500).json({message: "Ocorreu um erro."});
+        res.status(500).json({ message: "Ocorreu um erro ao salvar o pão de mel." });
     }
 });
 
-
-router.get("/paodemel", async (req, res) => {
+router.get("/", async (req, res) => {
     try {
-        const paoDeMel = await PaoDeMel.find(); 
-
+        const paoDeMel = await PaoDeMel.find();
         res.status(200).json(paoDeMel);
     } catch (error) {
         console.log(error);
@@ -116,7 +109,7 @@ router.get("/paodemel", async (req, res) => {
     }
 });
 
-router.get("/paodemel/:id", async (req, res) => {
+router.get("/:id", async (req, res) => {
     try {
         const paoDeMel = await PaoDeMel.findById(req.params.id);
 
@@ -131,7 +124,7 @@ router.get("/paodemel/:id", async (req, res) => {
     }
 });
 
-router.get("/paodemel/ingredientes/:id", async (req, res) => {
+router.get("/ingredientes/:id", async (req, res) => {
     try {
         const paoDeMel = await PaoDeMel.findById(req.params.id);
 
@@ -140,7 +133,6 @@ router.get("/paodemel/ingredientes/:id", async (req, res) => {
         }
 
         const precosIngredientes = paoDeMel.ingredientes;
-
         const precosCalculados = calcularPrecoProporcional(precosIngredientes);
 
         res.status(200).json(precosCalculados);
@@ -150,7 +142,7 @@ router.get("/paodemel/ingredientes/:id", async (req, res) => {
     }
 });
 
-router.delete("/paodemel/:id", async (req, res) => {
+router.delete("/:id", async (req, res) => {
     try {
         const paoDeMel = await PaoDeMel.findById(req.params.id);
 
@@ -163,13 +155,11 @@ router.delete("/paodemel/:id", async (req, res) => {
         res.status(200).json({ message: "Pão de mel excluído com sucesso." });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Ocorreu um erro ao excluir o Pão de mel." });
+        res.status(500).json({ message: "Ocorreu um erro ao excluir o pão de mel." });
     }
 });
 
-router.put("/paodemel/:id",
-upload.single('imagem'),
-async (req, res) => {
+router.put("/:id", upload.single('imagem'), async (req, res) => {
     try {
         let imagemUrl = null;
         if (req.file) {
@@ -177,9 +167,9 @@ async (req, res) => {
         }
 
         const { tipo, ingredientes = {}, preco } = req.body;
-        
+
         const updatedFields = {
-            // tipo,
+            tipo,
             ingredientes: {
                 mel: ingredientes.mel,
                 manteiga: ingredientes.manteiga,
@@ -210,29 +200,24 @@ async (req, res) => {
     }
 });
 
-
-router.put("/paodemel/preco/:id", async (req, res) => {
+router.put("/preco/:id", async (req, res) => {
     try {
         const preco = req.body.preco;
 
-        const paodemelPreco ={
+        const paoDeMelPreco = {
             preco
+        };
+
+        const updatePreco = await PaoDeMel.findByIdAndUpdate(req.params.id, paoDeMelPreco, { new: true });
+
+        if (!updatePreco) {
+            return res.status(404).json({ message: "Pão de mel não encontrado." });
         }
-        
-        const updatePreco = await PaoDeMel.findByIdAndUpdate(req.params.id, paodemelPreco, { new: true});
-        
-        if (!updatePreco){
-            return res.status(404).json({ message: "Pão de mel não encontrado."});
-        }
+
         res.status(200).json(updatePreco);
     } catch (error) {
         res.status(500).json({ message: "Ocorreu um erro ao atualizar o pão de mel." });
     }
-})
-
-
-
-
-
+});
 
 module.exports = router;
