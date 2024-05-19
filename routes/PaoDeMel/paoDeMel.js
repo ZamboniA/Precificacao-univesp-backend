@@ -47,20 +47,17 @@ function calcularPrecoProporcional(precos) {
     return resultado;
 }
 
-// const storage = multer.diskStorage({
-//     destination: (req, file, callback) => {
-//         callback(null, './uploads'); 
-//     },
-//     filename: (req, file, callback) => {
-//         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-//         const extname = path.extname(file.originalname);
-//         const filename = uniqueSuffix + extname;
-//         callback(null, filename);
-//     }
-// });
+const storage = multer.diskStorage({
+    destination: path.resolve(__dirname, '../uploads'),
+    filename: (req, file, callback) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const extname = path.extname(file.originalname);
+        const filename = uniqueSuffix + extname;
+        callback(null, filename);
+    }
+});
 
-
-// const upload = multer({ storage: storage });
+const upload = multer({ storage: storage });
 
 router.post("/", upload.single("imagem"), async (req, res) => {
     try {
@@ -88,7 +85,7 @@ router.post("/", upload.single("imagem"), async (req, res) => {
                 ovos: ingredientes.ovos
             },
             preco,
-            imagem,
+            imagem: req.file ? req.file.path : null,
             dataUpdate
         });
 
@@ -164,12 +161,12 @@ router.delete("/:id", async (req, res) => {
 
 router.put("/:id", upload.single('imagem'), async (req, res) => {
     try {
-        // let imagemUrl = null;
-        // if (req.file) {
-        //     imagemUrl = req.file.filename;
-        // }
+        let imagemUrl = null;
+        if (req.file) {
+            imagemUrl = req.file.filename;
+        }
 
-        const { tipo, ingredientes = {}, preco, imagem } = req.body;
+        const { tipo, ingredientes = {}, preco } = req.body;
 
         const updatedFields = {
             tipo,
@@ -187,7 +184,7 @@ router.put("/:id", upload.single('imagem'), async (req, res) => {
                 ovos: ingredientes.ovos
             },
             preco,
-            imagem,
+            imagem: imagemUrl,
         };
 
         const updatedPaoDeMel = await PaoDeMel.findByIdAndUpdate(req.params.id, updatedFields, { new: true });
