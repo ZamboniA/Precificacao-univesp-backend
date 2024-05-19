@@ -32,19 +32,19 @@ function calcularPrecoProporcional(precos) {
     return resultado;
 }
 
-const storage = multer.diskStorage({
-    destination: (req, file, callback) => {
-        callback(null, './uploads'); 
-    },
-    filename: (req, file, callback) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const extname = path.extname(file.originalname);
-        const filename = uniqueSuffix + extname;
-        callback(null, filename);
-    }
-});
+// const storage = multer.diskStorage({
+//     destination: (req, file, callback) => {
+//         callback(null, './uploads'); 
+//     },
+//     filename: (req, file, callback) => {
+//         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+//         const extname = path.extname(file.originalname);
+//         const filename = uniqueSuffix + extname;
+//         callback(null, filename);
+//     }
+// });
 
-const upload = multer({ storage: storage });
+// const upload = multer({ storage: storage });
 
 router.post("/", upload.single('imagem'), async (req, res) => {
     try {
@@ -141,14 +141,14 @@ router.delete("/:id", async (req, res) => {
 });
 
 router.put("/:id",
- upload.single('imagem'),
+//  upload.single('imagem'),
  async (req, res) => {
     try {
-            let imagemUrl = null;
-            if (req.file) {
-                imagemUrl = req.file.filename;
-            }
-        const { tipo, ingredientes = {}, preco } = req.body;
+            // let imagemUrl = null;
+            // if (req.file) {
+            //     imagemUrl = req.file.filename;
+            // }
+        const { tipo, ingredientes = {}, preco, imagem } = req.body;
 
         const updatedFields = {
             tipo,
@@ -159,7 +159,7 @@ router.put("/:id",
                 gelatina: ingredientes.gelatina || null,
             },
             preco,
-            imagem: imagemUrl,
+            imagem,
         };
 
         const updatedMousse = await Mousse.findByIdAndUpdate(req.params.id, updatedFields, { new: true });
