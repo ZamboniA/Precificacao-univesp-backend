@@ -33,17 +33,7 @@ const todosItensRoutes = require("./routes/todosItens/todosItens");
 const custosRoutes = require("./routes/custos/custos");
 
 // Uso de rotas
-// app.use('/brownie', brownieRoutes);
-app.get('/brownie', async (req, res) => {
-    try {
-        console.log('Chamada para a rota /brownie recebida');
-        const brownies = await Brownie.find();
-        res.status(200).json(brownies);
-    } catch (error) {
-        console.error('Erro ao buscar brownies:', error);
-        res.status(500).json({ message: "Ocorreu um erro ao buscar os brownies." });
-    }
-});
+app.use('/brownie', brownieRoutes);
 app.use('/mousse', mousseRoutes);
 app.use('/paodemel', paoDeMelRoutes);
 app.use('/todositens', todosItensRoutes);
