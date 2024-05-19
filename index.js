@@ -1,4 +1,3 @@
-require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -12,14 +11,14 @@ app.use(cors());
 
 
 mongoose.connect(process.env.MONGODB_URL, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  useFindAndModify: false,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
 });
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "Erro de conexão com o MongoDB:"));
 db.once("open", () => {
-  console.log("Conectado ao MongoDB!");
+    console.log("Conectado ao MongoDB!");
 });
 
 
