@@ -8,11 +8,7 @@ const CustosSchema = new Schema({
     fita: Number,
     etiqueta: Number,
     custoFixo: Number,
-    aluguel: Number,
-    internet: Number,
-    imposto: Number,
-    limpeza: Number,
-
+    custoVariaveis: Number,
     dataUpdate: {
         type: Date,
         default: Date.now

@@ -4,6 +4,53 @@ const router = Router();
 const multer = require("multer");
 const path = require("path");
 
+function calcularPrecoProporcional(precos) {
+    const quantidadesUtilizadas = {
+        mel: 150,                   // em gramas
+        manteiga: 50,              // em gramas
+        leiteIntegral: 240,        // em ml
+        cacau: 20,                // em gramas
+        fermentoQuimico: 30,       // em gramas
+        canelaPo: 2,             // em gramas
+        cravoPo: 1,              // em gramas
+        acucar: 150,                // em gramas
+        farinhaDeTrigo: 240,       // em gramas
+        baunilha: 5,                   // em mL
+        ovos: 2                    // em unidades
+    };
+
+    const quantidadesTotais = {
+        mel: 1000,                  // quantidade total em gramas
+        manteiga: 1000,             // quantidade total em gramas
+        leiteIntegral: 1000,        // quantidade total em ml
+        cacau: 1000,                // quantidade total em gramas
+        fermentoQuimico: 100,       // quantidade total em gramas
+        canelaPo: 1000,             // quantidade total em gramas
+        cravoPo: 1000,              // quantidade total em gramas
+        acucar: 1000,               // quantidade total em gramas
+        farinhaDeTrigo: 1000,       // quantidade total em gramas
+        baunilha: 1000,                  // quantidade total em gramas
+        ovos: 12                    // quantidade total em unidades
+    };
+
+    let resultado = {};
+    for (let item in quantidadesUtilizadas) {
+        let quantidadeUtilizada = quantidadesUtilizadas[item];
+        let precoTotal = precos[item]; 
+        let quantidadeTotal = quantidadesTotais[item];
+
+
+        let precoProporcional = (precoTotal / quantidadeTotal) * quantidadeUtilizada;
+
+
+        precoProporcional = parseFloat(precoProporcional.toFixed(2));
+
+        resultado[item] = precoProporcional;
+    }
+    return resultado;
+}
+
+
 const storage = multer.diskStorage({
     destination: path.resolve(__dirname, '../uploads'),
     filename: (req, file, callback) => {
@@ -39,7 +86,7 @@ router.post("/paodemel", upload.single("imagem"), async (req, res) => {
                 cravoPo: ingredientes.cravoPo,
                 acucar: ingredientes.acucar,
                 farinhaDeTrigo: ingredientes.farinhaDeTrigo,
-                sal: ingredientes.sal,
+                baunilha: ingredientes.baunilha,
                 ovos: ingredientes.ovos
             },
             preco,
@@ -84,6 +131,25 @@ router.get("/paodemel/:id", async (req, res) => {
     }
 });
 
+router.get("/paodemel/ingredientes/:id", async (req, res) => {
+    try {
+        const paoDeMel = await PaoDeMel.findById(req.params.id);
+
+        if (!paoDeMel) {
+            return res.status(404).json({ message: "Pão de mel não encontrado." });
+        }
+
+        const precosIngredientes = paoDeMel.ingredientes;
+
+        const precosCalculados = calcularPrecoProporcional(precosIngredientes);
+
+        res.status(200).json(precosCalculados);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Ocorreu um erro ao buscar o pão de mel." });
+    }
+});
+
 router.delete("/paodemel/:id", async (req, res) => {
     try {
         const paoDeMel = await PaoDeMel.findById(req.params.id);
@@ -101,12 +167,15 @@ router.delete("/paodemel/:id", async (req, res) => {
     }
 });
 
-router.put("/paodemel/:id", async (req, res) => {
+router.put("/paodemel/:id",
+upload.single('imagem'),
+async (req, res) => {
     try {
-        // let imagemUrl = null;
-        // if (req.file) {
-        //     imagemUrl = req.file.filename;
-        // }
+        let imagemUrl = null;
+        if (req.file) {
+            imagemUrl = req.file.filename;
+        }
+
         const { tipo, ingredientes = {}, preco } = req.body;
         
         const updatedFields = {
@@ -121,11 +190,11 @@ router.put("/paodemel/:id", async (req, res) => {
                 cravoPo: ingredientes.cravoPo,
                 acucar: ingredientes.acucar,
                 farinhaDeTrigo: ingredientes.farinhaDeTrigo,
-                sal: ingredientes.sal,
+                baunilha: ingredientes.baunilha,
                 ovos: ingredientes.ovos
             },
-            // preco,
-            // imagem: imagemUrl,
+            preco,
+            imagem: imagemUrl,
         };
 
         const updatedPaoDeMel = await PaoDeMel.findByIdAndUpdate(req.params.id, updatedFields, { new: true });

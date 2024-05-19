@@ -5,6 +5,41 @@ const multer = require("multer");
 const path = require("path");
 
 
+function calcularPrecoProporcional(precos) {
+    const quantidadesUtilizadas = {
+        chocolateMeioAmargo: 250, // em gramas
+        manteiga: 250,            // em gramas
+        acucar: 200,              // em gramas
+        farinhaDeTrigo: 100,      // em gramas
+        sal: 2,                   // em grama
+        ovos: 4                   // unidades
+    };
+
+
+    const quantidadesTotais = {
+        chocolateMeioAmargo: 1000, // 1kg
+        manteiga: 500,             // 500g
+        acucar: 1000,              // 1kg
+        farinhaDeTrigo: 1000,      // 1kg
+        sal: 500,                  // 500g
+        ovos: 12                   // 12 unidades
+    };
+
+    let resultado = {};
+    for (let item in quantidadesUtilizadas) {
+        let quantidadeUtilizada = quantidadesUtilizadas[item];
+        let precoTotal = precos[item];
+        let quantidadeTotal = quantidadesTotais[item];
+
+        let precoProporcional = (precoTotal / quantidadeTotal) * quantidadeUtilizada;
+
+
+        resultado[item] = parseFloat(precoProporcional).toFixed(2);
+    }
+    return resultado;
+}
+
+
 const storage = multer.diskStorage({
     destination: path.resolve(__dirname, '../uploads'),
     filename: (req, file, callback) => {
@@ -56,6 +91,25 @@ router.get("/brownie", async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Ocorreu um erro ao buscar os brownies." });
+    }
+});
+
+router.get("/brownie/ingredientes/:id", async (req, res) => {
+    try {
+        const brownie = await Brownie.findById(req.params.id);
+
+        if (!brownie) {
+            return res.status(404).json({ message: "Brownie não encontrado." });
+        }
+
+        const precosIngredientes = brownie.ingredientes;
+
+        const precosCalculados = calcularPrecoProporcional(precosIngredientes);
+
+        res.status(200).json(precosCalculados);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Ocorreu um erro ao buscar o brownie." });
     }
 });
 
@@ -117,7 +171,7 @@ async (req, res) => {
         };
 
         const updatedBrownie = await Brownie.findByIdAndUpdate(req.params.id, updatedFields, { new: true });
-
+        
         console.log(updatedBrownie)
         if (!updatedBrownie) {
             return res.status(404).json({ message: "Brownie não encontrado." });

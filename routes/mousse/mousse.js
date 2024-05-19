@@ -5,6 +5,36 @@ const multer = require("multer");
 const path = require("path");
 
 
+function calcularPrecoProporcional(precos) {
+    const quantidadesUtilizadas = {
+        leiteCondensado: 1,    // unidade
+        cremeDeLeite: 1,       // unidade
+        maracuja: 500,         // em ml
+        gelatina: 1            // unidade
+    };
+
+
+    const quantidadesTotais = {
+        leiteCondensado: 1,    // unidade
+        cremeDeLeite: 1,       // unidade
+        maracuja: 1000,        // quantidade total em ml
+        gelatina: 1            // unidade
+    };
+
+    let resultado = {};
+    for (let item in quantidadesUtilizadas) {
+        let quantidadeUtilizada = quantidadesUtilizadas[item];
+        let precoTotal = precos[item];
+        let quantidadeTotal = quantidadesTotais[item];
+
+        let precoProporcional = (precoTotal / quantidadeTotal) * quantidadeUtilizada;
+
+
+        resultado[item] = parseFloat(precoProporcional).toFixed(2);
+    }
+    return resultado;
+}
+
 const storage = multer.diskStorage({
     destination: path.resolve(__dirname, '../uploads'),
     filename: (req, file, callback) => {
@@ -31,7 +61,7 @@ router.post("/mousse", upload.single('imagem'), async (req, res) => {
                 gelatina: ingredientes.gelatina,
             },
             preco,
-            imagem,
+            // imagem,
             dataUpdate
         });
 
@@ -54,6 +84,24 @@ router.get("/mousse", async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Ocorreu um erro ao buscar os mousses." });
+    }
+});
+
+router.get("/mousse/ingredientes/:id", async (req, res) => {
+    try {
+        const mousse = await Mousse.findById(req.params.id);
+
+        if (!mousse) {
+            return res.status(404).json({ message: "Mousse não encontrado." });
+        }
+        const precosIngredientes = mousse.ingredientes;
+
+        const precosCalculados = calcularPrecoProporcional(precosIngredientes);
+
+        res.status(200).json(precosCalculados);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Ocorreu um erro ao buscar o mousse." });
     }
 });
 
@@ -99,12 +147,12 @@ router.put("/mousse/:id", async (req, res) => {
         const { tipo, ingredientes = {}, preco } = req.body;
 
         const updatedFields = {
-            // tipo,   
-            ingredientes: {
-                leiteCondensado: ingredientes.leiteCondensado,
-                cremeDeLeite: ingredientes.cremeDeLeite,
-                maracuja: ingredientes.maracuja,
-                gelatina: ingredientes.gelatina,
+            // tipo,
+            ingredientes: {  // Aqui está o problema
+                leiteCondensado: ingredientes.leiteCondensado || null,
+                cremeDeLeite: ingredientes.cremeDeLeite || null,
+                maracuja: ingredientes.maracuja || null,
+                gelatina: ingredientes.gelatina || null,
             },
             // preco,
             // imagem: imagemUrl,
@@ -113,18 +161,17 @@ router.put("/mousse/:id", async (req, res) => {
         console.log(updatedFields);
         const updatedMousse = await Mousse.findByIdAndUpdate(req.params.id, updatedFields, { new: true });
 
-
-
         if (!updatedMousse) {
-            return res.status(404).json({ message: "Moussie não encontrado." });
+            return res.status(404).json({ message: "Mousse não encontrado." });
         }
 
         res.status(200).json(updatedMousse);
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Ocorreu um erro ao atualizar o mousse." });;
+        res.status(500).json({ message: "Ocorreu um erro ao atualizar o mousse." });
     }
 });
+
 
 
 router.put("/mousse/preco/:id", async (req, res) => {

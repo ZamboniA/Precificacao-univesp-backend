@@ -14,7 +14,7 @@ const PaoDeMelSchema = new Schema({
         cravoPo: Number,
         acucar: Number,
         farinhaDeTrigo: Number,
-        sal: Number,
+        baunilha: Number,
         ovos: Number
     },
     preco: Number,
