@@ -12,17 +12,17 @@ router.get("/", async (req, res) => {
 
         const browniesComImagens = brownies.map(item => ({
             ...item._doc,
-            imagemUrl: item.imagem ? `${process.env.HOST}/uploads/${item.imagem}` : null
+            imagemUrl: item.imagemUrl ? item.imagemUrl : 'https://i.imgur.com/F1CwKya.jpeg'
         }));
-
+        
         const moussesComImagens = mousses.map(item => ({
             ...item._doc,
-            imagemUrl: item.imagem ? `${process.env.HOST}/uploads/${item.imagem}` : null
+            imagemUrl: item.imagemUrl ? item.imagemUrl : 'https://i.imgur.com/F1CwKya.jpeg'
         }));
-
+        
         const paesDeMelComImagens = paesDeMel.map(item => ({
             ...item._doc,
-            imagemUrl: item.imagem ? `${process.env.HOST}/uploads/${item.imagem}` : null
+            imagemUrl: item.imagemUrl ? item.imagemUrl : 'https://i.imgur.com/F1CwKya.jpeg'
         }));
 
         const allItems = [...browniesComImagens, ...moussesComImagens, ...paesDeMelComImagens];
