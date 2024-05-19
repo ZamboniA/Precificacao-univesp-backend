@@ -144,8 +144,14 @@ router.delete("/:id", async (req, res) => {
     }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id",
+upload.single('imagem'),
+async (req, res) => {
     try {
+        let imagemUrl = null;
+        if (req.file) {
+            imagemUrl = req.file.filename;
+        }
         const { tipo, ingredientes = {}, preco } = req.body;
 
         const updatedFields = {
@@ -159,6 +165,7 @@ router.put("/:id", async (req, res) => {
                 ovos: ingredientes.ovos
             },
             preco,
+            imagem: imagemUrl,
         };
 
         const updatedBrownie = await Brownie.findByIdAndUpdate(req.params.id, updatedFields, { new: true });

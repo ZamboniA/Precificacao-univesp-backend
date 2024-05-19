@@ -138,7 +138,9 @@ router.delete("/:id", async (req, res) => {
     }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id",
+ upload.single('imagem'),
+ async (req, res) => {
     try {
         const { tipo, ingredientes = {}, preco } = req.body;
 
@@ -151,6 +153,7 @@ router.put("/:id", async (req, res) => {
                 gelatina: ingredientes.gelatina || null,
             },
             preco,
+            imagem: imagemUrl,
         };
 
         const updatedMousse = await Mousse.findByIdAndUpdate(req.params.id, updatedFields, { new: true });
