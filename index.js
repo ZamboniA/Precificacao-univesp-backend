@@ -10,9 +10,6 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json());
 app.use(cors());
 
-// Configuração do Mongoose para remover a opção useCreateIndex
-mongoose.set('useCreateIndex', true);
-
 // Conexão com o MongoDB usando a variável de ambiente
 mongoose.connect(process.env.MONGODB_URL, {
     useNewUrlParser: true,
@@ -26,7 +23,7 @@ db.once("open", () => {
 });
 
 // Servindo arquivos estáticos
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'routes', 'uploads')));
 
 // Importação de rotas
 const brownieRoutes = require("./routes/brownie/brownie");
