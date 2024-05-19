@@ -4,12 +4,13 @@ const cors = require("cors");
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT || 3001;
 
+// Middleware para JSON e CORS
 app.use(express.json());
 app.use(cors());
 
-
+// Conexão com o MongoDB usando a variável de ambiente
 mongoose.connect(process.env.MONGODB_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -21,23 +22,24 @@ db.once("open", () => {
     console.log("Conectado ao MongoDB!");
 });
 
-
+// Servindo arquivos estáticos
 app.use('/uploads', express.static(path.join(__dirname, 'routes', 'uploads')));
 
-
+// Importação de rotas
 const brownieRoutes = require("./routes/brownie/brownie");
 const mousseRoutes = require("./routes/mousse/mousse");
 const paoDeMelRoutes = require("./routes/PaoDeMel/paoDeMel");
 const todosItensRoutes = require("./routes/todosItens/todosItens");
 const custosRoutes = require("./routes/custos/custos");
 
+// Uso de rotas
 app.use('/brownie', brownieRoutes);
 app.use('/mousse', mousseRoutes);
 app.use('/paodemel', paoDeMelRoutes);
 app.use('/todositens', todosItensRoutes);
 app.use('/custos', custosRoutes);
 
-
+// Iniciar o servidor
 app.listen(PORT, () => {
- console.log(`Servidor rodando em http://localhost:${PORT}/`);
+    console.log(`Servidor rodando em http://localhost:${PORT}/`);
 });
