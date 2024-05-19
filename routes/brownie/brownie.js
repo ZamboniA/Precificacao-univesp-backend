@@ -37,12 +37,14 @@ function calcularPrecoProporcional(precos) {
 }
 
 const storage = multer.diskStorage({
-    destination: path.resolve(__dirname, '../uploads'),
+    destination: (req, file, callback) => {
+        callback(null, './uploads'); 
+    },
     filename: (req, file, callback) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-        const extname = path.extname(file.originalname)
-        const filename = uniqueSuffix + extname
-        callback(null, filename)
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const extname = path.extname(file.originalname);
+        const filename = uniqueSuffix + extname;
+        callback(null, filename);
     }
 });
 
