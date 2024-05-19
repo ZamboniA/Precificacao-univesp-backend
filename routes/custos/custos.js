@@ -1,24 +1,22 @@
-const { Router } = require ("express");
+const { Router } = require("express");
 const { Custos } = require("../../models/CustosSchema");
 const router = Router();
 
 function calcularPrecoProporcional(precos) {
     const quantidadesUtilizadas = {
         cobertura: 500, // em gramas
-        recheio: 350,            // em gramas
-        sacosPlasticos: 1,              // unidades
-        fita: 1,      // unidades
-        etiqueta: 1,                   //unidades
-
+        recheio: 350, // em gramas
+        sacosPlasticos: 1, // unidades
+        fita: 1, // unidades
+        etiqueta: 1, // unidades
     };
-
 
     const quantidadesTotais = {
         cobertura: 1000, // 1kg
-        recheio: 400,             // 500g
-        sacosPlasticos: 50,              // 1kg
-        fita: 300,      // 1kg
-        etiqueta: 100,                  // 500g
+        recheio: 400, // 400g
+        sacosPlasticos: 50, // 50 unidades
+        fita: 300, // 300 unidades
+        etiqueta: 100, // 100 unidades
     };
 
     let resultado = {};
@@ -29,14 +27,12 @@ function calcularPrecoProporcional(precos) {
 
         let precoProporcional = (precoTotal / quantidadeTotal) * quantidadeUtilizada;
 
-
         resultado[item] = parseFloat(precoProporcional).toFixed(2);
     }
     return resultado;
 }
 
-
-router.post("/custos", async (req, res) => {
+router.post("/", async (req, res) => {
     try {
         const {
             cobertura,
@@ -47,7 +43,7 @@ router.post("/custos", async (req, res) => {
             custoFixo,
             aluguel,
             custoVariaveis,
-            dataUpdate
+            dataUpdate,
         } = req.body;
 
         const custos = new Custos({
@@ -59,7 +55,7 @@ router.post("/custos", async (req, res) => {
             custoFixo,
             aluguel,
             custoVariaveis,
-            dataUpdate
+            dataUpdate,
         });
 
         const savedCustos = await custos.save();
@@ -68,15 +64,13 @@ router.post("/custos", async (req, res) => {
         res.status(201).json(savedCustos);
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Ocorreu um erro." });
+        res.status(500).json({ message: "Ocorreu um erro ao salvar os custos." });
     }
 });
 
-
-router.get("/custos", async (req, res) => {
+router.get("/", async (req, res) => {
     try {
-        const custos = await Custos.find(); 
-
+        const custos = await Custos.find();
         res.status(200).json(custos);
     } catch (error) {
         console.log(error);
@@ -84,48 +78,53 @@ router.get("/custos", async (req, res) => {
     }
 });
 
-router.get("/custos/calculados/:id", async (req, res) => {
+router.get("/calculados/:id", async (req, res) => {
     try {
-        const custos = await Custos.find();
+        const custo = await Custos.findById(req.params.id);
+
+        if (!custo) {
+            return res.status(404).json({ message: "Custo não encontrado." });
+        }
 
         const precosIngredientes = {
-            cobertura: custos[0].cobertura,
-            recheio: custos[0].recheio,
-            sacosPlasticos: custos[0].sacosPlasticos,
-            fita: custos[0].fita,
-            etiqueta: custos[0].etiqueta,
+            cobertura: custo.cobertura,
+            recheio: custo.recheio,
+            sacosPlasticos: custo.sacosPlasticos,
+            fita: custo.fita,
+            etiqueta: custo.etiqueta,
         };
 
         const precosCalculados = calcularPrecoProporcional(precosIngredientes);
 
         const custoCalculado = {
             ...precosCalculados,
-            custoFixo: custos[0].custoFixo,
-            custoVariaveis: custos[0].custoVariaveis
+            custoFixo: custo.custoFixo,
+            custoVariaveis: custo.custoVariaveis,
         };
 
         res.status(200).json(custoCalculado);
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Ocorreu um erro ao buscar os custos." });
+        res.status(500).json({ message: "Ocorreu um erro ao buscar os custos calculados." });
     }
 });
-router.get("/custos/:id", async (req, res) => {
+
+router.get("/:id", async (req, res) => {
     try {
-        const custos = await Custos.find(); 
+        const custo = await Custos.findById(req.params.id);
 
-
-        if (!custos) {
+        if (!custo) {
             return res.status(404).json({ message: "Custo não encontrado." });
         }
-        res.status(200).json(custos);
+
+        res.status(200).json(custo);
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Ocorreu um erro ao buscar os custos." });
+        res.status(500).json({ message: "Ocorreu um erro ao buscar o custo." });
     }
 });
 
-router.delete("/custos/:id", async (req, res) => {
+router.delete("/:id", async (req, res) => {
     try {
         const custo = await Custos.findById(req.params.id);
 
@@ -142,7 +141,7 @@ router.delete("/custos/:id", async (req, res) => {
     }
 });
 
-router.put("/custos/:id", async (req, res) => {
+router.put("/:id", async (req, res) => {
     try {
         const {
             cobertura,
@@ -151,8 +150,9 @@ router.put("/custos/:id", async (req, res) => {
             fita,
             etiqueta,
             custoFixo,
+            aluguel,
             custoVariaveis,
-            dataUpdate
+            dataUpdate,
         } = req.body;
 
         const updatedCustos = await Custos.findByIdAndUpdate(
@@ -164,10 +164,11 @@ router.put("/custos/:id", async (req, res) => {
                 fita,
                 etiqueta,
                 custoFixo,
+                aluguel,
                 custoVariaveis,
-                dataUpdate
+                dataUpdate,
             },
-            { new: true } 
+            { new: true }
         );
 
         if (!updatedCustos) {
@@ -181,6 +182,5 @@ router.put("/custos/:id", async (req, res) => {
         res.status(500).json({ message: "Ocorreu um erro ao atualizar o custo." });
     }
 });
-
 
 module.exports = router;
