@@ -11,12 +11,11 @@ app.use(express.json());
 app.use(cors());
 
 // Conexão com o MongoDB usando a variável de ambiente
+mongoose.set('useCreateIndex', true); // Adicionando a opção useCreateIndex
 mongoose.connect(process.env.MONGODB_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 });
-
-
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "Erro de conexão com o MongoDB:"));
 db.once("open", () => {
@@ -24,7 +23,7 @@ db.once("open", () => {
 });
 
 // Servindo arquivos estáticos
-app.use('/uploads', express.static(path.join(__dirname, 'routes', 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Importação de rotas
 const brownieRoutes = require("./routes/brownie/brownie");
