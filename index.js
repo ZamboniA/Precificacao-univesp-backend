@@ -10,12 +10,15 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json());
 app.use(cors());
 
+// Configuração do Mongoose para remover a opção useCreateIndex
+mongoose.set('useCreateIndex', true);
+
 // Conexão com o MongoDB usando a variável de ambiente
-mongoose.set('useCreateIndex', true); // Adicionando a opção useCreateIndex
 mongoose.connect(process.env.MONGODB_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 });
+
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "Erro de conexão com o MongoDB:"));
 db.once("open", () => {
