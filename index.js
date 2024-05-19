@@ -39,6 +39,11 @@ app.use('/paodemel', paoDeMelRoutes);
 app.use('/todositens', todosItensRoutes);
 app.use('/custos', custosRoutes);
 
+// Rota padrão para verificar se o servidor está funcionando
+app.get('/', (req, res) => {
+    res.send('Hello, Heroku!');
+});
+
 // Iniciar o servidor
 app.listen(PORT, () => {
     console.log(`Servidor rodando em http://localhost:${PORT}/`);
