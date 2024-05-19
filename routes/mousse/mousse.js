@@ -142,6 +142,10 @@ router.put("/:id",
  upload.single('imagem'),
  async (req, res) => {
     try {
+            let imagemUrl = null;
+            if (req.file) {
+                imagemUrl = req.file.filename;
+            }
         const { tipo, ingredientes = {}, preco } = req.body;
 
         const updatedFields = {
