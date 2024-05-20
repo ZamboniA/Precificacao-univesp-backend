@@ -3,34 +3,56 @@ const { PaoDeMel } = require("../../models/PaoDeMelSchema");
 const router = Router();
 const multer = require("multer");
 const path = require("path");
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
+// Configuração do Cloudinary
+cloudinary.config({ 
+    cloud_name: 'db2bkdlr5', 
+    api_key: '456854766172429', 
+    api_secret: '4SJxQhJawwzqt19qPfjU3EJo9Qs' 
+});
+
+// Configuração do armazenamento do Cloudinary com Multer
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'uploads', // A pasta onde as imagens serão armazenadas no Cloudinary
+        allowed_formats: ['jpg', 'jpeg', 'png'],
+        transformation: [{ width: 500, height: 500, crop: 'limit' }]
+    }
+});
+
+const upload = multer({ storage: storage });
+
+// Função para calcular o preço proporcional
 function calcularPrecoProporcional(precos) {
     const quantidadesUtilizadas = {
-        mel: 150,                   // em gramas
-        manteiga: 50,               // em gramas
-        leiteIntegral: 240,         // em ml
-        cacau: 20,                  // em gramas
-        fermentoQuimico: 30,        // em gramas
-        canelaPo: 2,                // em gramas
-        cravoPo: 1,                 // em gramas
-        acucar: 150,                // em gramas
-        farinhaDeTrigo: 240,        // em gramas
-        baunilha: 5,                // em mL
-        ovos: 2                     // em unidades
+        mel: 150,                   
+        manteiga: 50,               
+        leiteIntegral: 240,         
+        cacau: 20,                  
+        fermentoQuimico: 30,        
+        canelaPo: 2,                
+        cravoPo: 1,                 
+        acucar: 150,                
+        farinhaDeTrigo: 240,        
+        baunilha: 5,                
+        ovos: 2                     
     };
 
     const quantidadesTotais = {
-        mel: 1000,                  // quantidade total em gramas
-        manteiga: 1000,             // quantidade total em gramas
-        leiteIntegral: 1000,        // quantidade total em ml
-        cacau: 1000,                // quantidade total em gramas
-        fermentoQuimico: 100,       // quantidade total em gramas
-        canelaPo: 1000,             // quantidade total em gramas
-        cravoPo: 1000,              // quantidade total em gramas
-        acucar: 1000,               // quantidade total em gramas
-        farinhaDeTrigo: 1000,       // quantidade total em gramas
-        baunilha: 1000,             // quantidade total em gramas
-        ovos: 12                    // quantidade total em unidades
+        mel: 1000,                  
+        manteiga: 1000,             
+        leiteIntegral: 1000,        
+        cacau: 1000,                
+        fermentoQuimico: 100,       
+        canelaPo: 1000,             
+        cravoPo: 1000,              
+        acucar: 1000,               
+        farinhaDeTrigo: 1000,       
+        baunilha: 1000,             
+        ovos: 12                    
     };
 
     let resultado = {};
@@ -47,25 +69,15 @@ function calcularPrecoProporcional(precos) {
     return resultado;
 }
 
-const storage = multer.diskStorage({
-    destination: path.resolve(__dirname, '../uploads'),
-    filename: (req, file, callback) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const extname = path.extname(file.originalname);
-        const filename = uniqueSuffix + extname;
-        callback(null, filename);
-    }
-});
-
-const upload = multer({ storage: storage });
-
+// Rota para adicionar um novo pão de mel
 router.post("/", upload.single("imagem"), async (req, res) => {
     try {
         const { nome, tipo, preco, ingredientes = {}, dataUpdate } = req.body;
 
-        let imagem = null;
+        let imagemUrl = null;
         if (req.file) {
-            imagem = req.file.filename;
+            // Se houver uma imagem, obtém a URL do Cloudinary
+            imagemUrl = req.file.path;
         }
 
         const paodemel = new PaoDeMel({
@@ -85,7 +97,7 @@ router.post("/", upload.single("imagem"), async (req, res) => {
                 ovos: ingredientes.ovos
             },
             preco,
-            imagem: req.file ? req.file.path : null,
+            imagem: imagemUrl,
             dataUpdate
         });
 
@@ -99,6 +111,7 @@ router.post("/", upload.single("imagem"), async (req, res) => {
     }
 });
 
+// Rota para buscar todos os pães de mel
 router.get("/", async (req, res) => {
     try {
         const paoDeMel = await PaoDeMel.find();
@@ -109,6 +122,7 @@ router.get("/", async (req, res) => {
     }
 });
 
+// Rota para buscar um pão de mel específico pelo ID
 router.get("/:id", async (req, res) => {
     try {
         const paoDeMel = await PaoDeMel.findById(req.params.id);
@@ -124,6 +138,7 @@ router.get("/:id", async (req, res) => {
     }
 });
 
+// Rota para calcular o preço proporcional dos ingredientes de um pão de mel
 router.get("/ingredientes/:id", async (req, res) => {
     try {
         const paoDeMel = await PaoDeMel.findById(req.params.id);
@@ -138,32 +153,17 @@ router.get("/ingredientes/:id", async (req, res) => {
         res.status(200).json(precosCalculados);
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Ocorreu um erro ao buscar o pão de mel." });
+        res.status(500).json({ message: "Ocorreu um erro ao calcular os preços dos ingredientes." });
     }
 });
 
-router.delete("/:id", async (req, res) => {
-    try {
-        const paoDeMel = await PaoDeMel.findById(req.params.id);
-
-        if (!paoDeMel) {
-            return res.status(404).json({ message: "Pão de mel não encontrado." });
-        }
-
-        await PaoDeMel.deleteOne({ _id: req.params.id });
-
-        res.status(200).json({ message: "Pão de mel excluído com sucesso." });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Ocorreu um erro ao excluir o pão de mel." });
-    }
-});
-
+// Rota para atualizar um pão de mel pelo ID
 router.put("/:id", upload.single('imagem'), async (req, res) => {
     try {
         let imagemUrl = null;
         if (req.file) {
-            imagemUrl = req.file.filename;
+            // Se houver uma imagem, obtém a URL do Cloudinary
+            imagemUrl = req.file.path;
         }
 
         const { tipo, ingredientes = {}, preco } = req.body;
@@ -200,6 +200,7 @@ router.put("/:id", upload.single('imagem'), async (req, res) => {
     }
 });
 
+// Rota para atualizar apenas o preço de um pão de mel pelo ID
 router.put("/preco/:id", async (req, res) => {
     try {
         const preco = req.body.preco;
@@ -216,7 +217,7 @@ router.put("/preco/:id", async (req, res) => {
 
         res.status(200).json(updatePreco);
     } catch (error) {
-        res.status(500).json({ message: "Ocorreu um erro ao atualizar o pão de mel." });
+        res.status(500).json({ message: "Ocorreu um erro ao atualizar o preço do pão de mel." });
     }
 });
 

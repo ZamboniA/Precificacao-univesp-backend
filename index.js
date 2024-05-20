@@ -2,6 +2,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require('path');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -10,7 +13,26 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json());
 app.use(cors());
 
+// Configuração do Cloudinary
+cloudinary.config({ 
+    cloud_name: 'db2bkdlr5', 
+    api_key: '456854766172429', 
+    api_secret: '4SJxQhJawwzqt19qPfjU3EJo9Qs' 
+});
 
+// Configuração do armazenamento do Cloudinary com Multer
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'uploads', // A pasta onde as imagens serão armazenadas no Cloudinary
+        allowed_formats: ['jpg', 'jpeg', 'png'],
+        transformation: [{ width: 500, height: 500, crop: 'limit' }]
+    }
+});
+
+const upload = multer({ storage: storage });
+
+// Conexão com o MongoDB
 mongoose.connect(process.env.MONGODB_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -38,6 +60,12 @@ app.use('/mousse', mousseRoutes);
 app.use('/paodemel', paoDeMelRoutes);
 app.use('/todositens', todosItensRoutes);
 app.use('/custos', custosRoutes);
+
+// Rota para fazer o upload de arquivos
+app.post('/upload', upload.single('file'), (req, res) => {
+    // `req.file` contém informações do arquivo enviado para o Cloudinary
+    res.json({ fileUrl: req.file.path });
+});
 
 // Rota padrão para verificar se o servidor está funcionando
 app.get('/', (req, res) => {
