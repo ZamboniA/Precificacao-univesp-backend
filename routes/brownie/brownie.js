@@ -3,29 +3,7 @@ const { Brownie } = require("../../models/BrownieSchema");
 const router = Router();
 const multer = require("multer");
 const path = require("path");
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-// Configuração do Cloudinary
-cloudinary.config({ 
-    cloud_name: 'db2bkdlr5', 
-    api_key: '456854766172429', 
-    api_secret: '4SJxQhJawwzqt19qPfjU3EJo9Qs' 
-});
-
-// Configuração do armazenamento do Cloudinary com Multer
-const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: 'uploads', // A pasta onde as imagens serão armazenadas no Cloudinary
-        allowed_formats: ['jpg', 'jpeg', 'png'],
-        transformation: [{ width: 500, height: 500, crop: 'limit' }]
-    }
-});
-
-const upload = multer({ storage: storage });
-
-// Função para calcular o preço proporcional
 function calcularPrecoProporcional(precos) {
     const quantidadesUtilizadas = {
         chocolateMeioAmargo: 250, // em gramas
@@ -53,20 +31,32 @@ function calcularPrecoProporcional(precos) {
 
         let precoProporcional = (precoTotal / quantidadeTotal) * quantidadeUtilizada;
 
-        resultado[item] = parseFloat(precoProporcional.toFixed(2));
+        resultado[item] = parseFloat(precoProporcional).toFixed(2);
     }
     return resultado;
 }
 
-// Rota para adicionar um novo brownie
+const storage = multer.diskStorage({
+    destination: (req, file, callback) => {
+        callback(null, './uploads'); 
+    },
+    filename: (req, file, callback) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const extname = path.extname(file.originalname);
+        const filename = uniqueSuffix + extname;
+        callback(null, filename);
+    }
+});
+
+const upload = multer({ storage: storage });
+
 router.post("/", upload.single('imagem'), async (req, res) => {
     try {
         const { nome, tipo, preco, ingredientes = {}, dataUpdate } = req.body;
 
-        let imagemUrl = null;
+        let imagem = null;
         if (req.file) {
-            // Se houver uma imagem, obtém a URL do Cloudinary
-            imagemUrl = req.file.path;
+            imagem = req.file.filename;
         }
 
         const brownie = new Brownie({
@@ -81,7 +71,7 @@ router.post("/", upload.single('imagem'), async (req, res) => {
                 ovos: ingredientes.ovos
             },
             preco,
-            imagem: imagemUrl,
+            imagem,
             dataUpdate
         });
 
@@ -95,7 +85,6 @@ router.post("/", upload.single('imagem'), async (req, res) => {
     }
 });
 
-// Rota para buscar todos os brownies
 router.get("/", async (req, res) => {
     try {
         const brownies = await Brownie.find();
@@ -106,7 +95,25 @@ router.get("/", async (req, res) => {
     }
 });
 
-// Rota para buscar um brownie específico pelo ID
+router.get("/ingredientes/:id", async (req, res) => {
+    try {
+        const brownie = await Brownie.findById(req.params.id);
+
+        if (!brownie) {
+            return res.status(404).json({ message: "Brownie não encontrado." });
+        }
+
+        const precosIngredientes = brownie.ingredientes;
+
+        const precosCalculados = calcularPrecoProporcional(precosIngredientes);
+
+        res.status(200).json(precosCalculados);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Ocorreu um erro ao buscar o brownie." });
+    }
+});
+
 router.get("/:id", async (req, res) => {
     try {
         const brownie = await Brownie.findById(req.params.id);
@@ -122,8 +129,7 @@ router.get("/:id", async (req, res) => {
     }
 });
 
-// Rota para calcular o preço proporcional dos ingredientes de um brownie
-router.get("/ingredientes/:id", async (req, res) => {
+router.delete("/:id", async (req, res) => {
     try {
         const brownie = await Brownie.findById(req.params.id);
 
@@ -131,25 +137,23 @@ router.get("/ingredientes/:id", async (req, res) => {
             return res.status(404).json({ message: "Brownie não encontrado." });
         }
 
-        const precosIngredientes = brownie.ingredientes;
-        const precosCalculados = calcularPrecoProporcional(precosIngredientes);
+        await Brownie.deleteOne({ _id: req.params.id });
 
-        res.status(200).json(precosCalculados);
+        res.status(200).json({ message: "Brownie excluído com sucesso." });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Ocorreu um erro ao calcular os preços dos ingredientes." });
+        res.status(500).json({ message: "Ocorreu um erro ao excluir o brownie." });
     }
 });
 
-// Rota para atualizar um brownie pelo ID
-router.put("/:id", upload.single('imagem'), async (req, res) => {
+router.put("/:id",
+upload.single('imagem'),
+async (req, res) => {
     try {
         let imagemUrl = null;
         if (req.file) {
-            // Se houver uma imagem, obtém a URL do Cloudinary
-            imagemUrl = req.file.path;
+            imagemUrl = req.file.filename;
         }
-
         const { tipo, ingredientes = {}, preco } = req.body;
 
         const updatedFields = {
@@ -179,7 +183,6 @@ router.put("/:id", upload.single('imagem'), async (req, res) => {
     }
 });
 
-// Rota para atualizar apenas o preço de um brownie pelo ID
 router.put("/preco/:id", async (req, res) => {
     try {
         const preco = req.body.preco;
@@ -196,25 +199,7 @@ router.put("/preco/:id", async (req, res) => {
 
         res.status(200).json(updatePreco);
     } catch (error) {
-        res.status(500).json({ message: "Ocorreu um erro ao atualizar o preço do brownie." });
-    }
-});
-
-// Rota para excluir um brownie pelo ID
-router.delete("/:id", async (req, res) => {
-    try {
-        const brownie = await Brownie.findById(req.params.id);
-
-        if (!brownie) {
-            return res.status(404).json({ message: "Brownie não encontrado." });
-        }
-
-        await Brownie.deleteOne({ _id: req.params.id });
-
-        res.status(200).json({ message: "Brownie excluído com sucesso." });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Ocorreu um erro ao excluir o brownie." });
+        res.status(500).json({ message: "Ocorreu um erro ao atualizar o brownie." });
     }
 });
 

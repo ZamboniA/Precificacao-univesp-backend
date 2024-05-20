@@ -3,29 +3,7 @@ const { Mousse } = require("../../models/MousseSchema");
 const router = Router();
 const multer = require("multer");
 const path = require("path");
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-// Configuração do Cloudinary
-cloudinary.config({ 
-    cloud_name: 'db2bkdlr5', 
-    api_key: '456854766172429', 
-    api_secret: '4SJxQhJawwzqt19qPfjU3EJo9Qs' 
-});
-
-// Configuração do armazenamento do Cloudinary com Multer
-const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: 'uploads', // A pasta onde as imagens serão armazenadas no Cloudinary
-        allowed_formats: ['jpg', 'jpeg', 'png'],
-        transformation: [{ width: 500, height: 500, crop: 'limit' }]
-    }
-});
-
-const upload = multer({ storage: storage });
-
-// Função para calcular o preço proporcional
 function calcularPrecoProporcional(precos) {
     const quantidadesUtilizadas = {
         leiteCondensado: 1,    // unidade
@@ -49,20 +27,32 @@ function calcularPrecoProporcional(precos) {
 
         let precoProporcional = (precoTotal / quantidadeTotal) * quantidadeUtilizada;
 
-        resultado[item] = parseFloat(precoProporcional.toFixed(2));
+        resultado[item] = parseFloat(precoProporcional).toFixed(2);
     }
     return resultado;
 }
 
-// Rota para adicionar um novo mousse
+const storage = multer.diskStorage({
+    destination: (req, file, callback) => {
+        callback(null, './uploads'); 
+    },
+    filename: (req, file, callback) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const extname = path.extname(file.originalname);
+        const filename = uniqueSuffix + extname;
+        callback(null, filename);
+    }
+});
+
+const upload = multer({ storage: storage });
+
 router.post("/", upload.single('imagem'), async (req, res) => {
     try {
         const { nome, tipo, preco, ingredientes = {}, dataUpdate } = req.body;
 
-        let imagemUrl = null;
+        let imagem = null;
         if (req.file) {
-            // Se houver uma imagem, obtém a URL do Cloudinary
-            imagemUrl = req.file.path;
+            imagem = req.file.filename;
         }
 
         const mousse = new Mousse({
@@ -75,21 +65,20 @@ router.post("/", upload.single('imagem'), async (req, res) => {
                 gelatina: ingredientes.gelatina,
             },
             preco,
-            imagem: imagemUrl,
+            imagem,
             dataUpdate
         });
 
         const savedMousse = await mousse.save();
 
         console.log(savedMousse);
-        res.status(201).json(savedMousse);
+        res.status(201).json(savedMousse)
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Ocorreu um erro ao salvar o mousse." });
     }
 });
 
-// Rota para buscar todos os mousses
 router.get("/", async (req, res) => {
     try {
         const mousses = await Mousse.find();
@@ -100,7 +89,25 @@ router.get("/", async (req, res) => {
     }
 });
 
-// Rota para buscar um mousse específico pelo ID
+router.get("/ingredientes/:id", async (req, res) => {
+    try {
+        const mousse = await Mousse.findById(req.params.id);
+
+        if (!mousse) {
+            return res.status(404).json({ message: "Mousse não encontrado." });
+        }
+
+        const precosIngredientes = mousse.ingredientes;
+
+        const precosCalculados = calcularPrecoProporcional(precosIngredientes);
+
+        res.status(200).json(precosCalculados);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Ocorreu um erro ao buscar o mousse." });
+    }
+});
+
 router.get("/:id", async (req, res) => {
     try {
         const mousse = await Mousse.findById(req.params.id);
@@ -116,8 +123,7 @@ router.get("/:id", async (req, res) => {
     }
 });
 
-// Rota para calcular o preço proporcional dos ingredientes de um mousse
-router.get("/ingredientes/:id", async (req, res) => {
+router.delete("/:id", async (req, res) => {
     try {
         const mousse = await Mousse.findById(req.params.id);
 
@@ -125,34 +131,32 @@ router.get("/ingredientes/:id", async (req, res) => {
             return res.status(404).json({ message: "Mousse não encontrado." });
         }
 
-        const precosIngredientes = mousse.ingredientes;
-        const precosCalculados = calcularPrecoProporcional(precosIngredientes);
+        await Mousse.deleteOne({ _id: req.params.id });
 
-        res.status(200).json(precosCalculados);
+        res.status(200).json({ message: "Mousse excluído com sucesso." });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Ocorreu um erro ao calcular os preços dos ingredientes." });
+        res.status(500).json({ message: "Ocorreu um erro ao excluir o Mousse." });
     }
 });
 
-// Rota para atualizar um mousse pelo ID
-router.put("/:id", upload.single('imagem'), async (req, res) => {
+router.put("/:id",
+ upload.single('imagem'),
+ async (req, res) => {
     try {
-        let imagemUrl = null;
-        if (req.file) {
-            // Se houver uma imagem, obtém a URL do Cloudinary
-            imagemUrl = req.file.path;
-        }
-
+            let imagemUrl = null;
+            if (req.file) {
+                imagemUrl = req.file.filename;
+            }
         const { tipo, ingredientes = {}, preco } = req.body;
 
         const updatedFields = {
             tipo,
             ingredientes: {
-                leiteCondensado: ingredientes.leiteCondensado,
-                cremeDeLeite: ingredientes.cremeDeLeite,
-                maracuja: ingredientes.maracuja,
-                gelatina: ingredientes.gelatina,
+                leiteCondensado: ingredientes.leiteCondensado || null,
+                cremeDeLeite: ingredientes.cremeDeLeite || null,
+                maracuja: ingredientes.maracuja || null,
+                gelatina: ingredientes.gelatina || null,
             },
             preco,
             imagem: imagemUrl,
@@ -171,7 +175,6 @@ router.put("/:id", upload.single('imagem'), async (req, res) => {
     }
 });
 
-// Rota para atualizar apenas o preço de um mousse pelo ID
 router.put("/preco/:id", async (req, res) => {
     try {
         const preco = req.body.preco;
@@ -188,25 +191,7 @@ router.put("/preco/:id", async (req, res) => {
 
         res.status(200).json(updatePreco);
     } catch (error) {
-        res.status(500).json({ message: "Ocorreu um erro ao atualizar o preço do mousse." });
-    }
-});
-
-// Rota para excluir um mousse pelo ID
-router.delete("/:id", async (req, res) => {
-    try {
-        const mousse = await Mousse.findById(req.params.id);
-
-        if (!mousse) {
-            return res.status(404).json({ message: "Mousse não encontrado." });
-        }
-
-        await Mousse.deleteOne({ _id: req.params.id });
-
-        res.status(200).json({ message: "Mousse excluído com sucesso." });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Ocorreu um erro ao excluir o mousse." });
+        res.status(500).json({ message: "Ocorreu um erro ao atualizar o mousse." });
     }
 });
 
