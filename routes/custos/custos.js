@@ -36,7 +36,7 @@ function calcularPrecoProporcional(precos) {
 }
 
 
-router.post("/custos", async (req, res) => {
+router.post("/", async (req, res) => {
     try {
         const {
             cobertura,
@@ -84,7 +84,7 @@ router.get("/custos", async (req, res) => {
     }
 });
 
-router.get("/custos/calculados/:id", async (req, res) => {
+router.get("/calculados/:id", async (req, res) => {
     try {
         const custos = await Custos.find();
 
@@ -110,7 +110,7 @@ router.get("/custos/calculados/:id", async (req, res) => {
         res.status(500).json({ message: "Ocorreu um erro ao buscar os custos." });
     }
 });
-router.get("/custos/:id", async (req, res) => {
+router.get("/:id", async (req, res) => {
     try {
         const custos = await Custos.find(); 
 
@@ -125,7 +125,7 @@ router.get("/custos/:id", async (req, res) => {
     }
 });
 
-router.delete("/custos/:id", async (req, res) => {
+router.delete("/:id", async (req, res) => {
     try {
         const custo = await Custos.findById(req.params.id);
 
@@ -142,7 +142,7 @@ router.delete("/custos/:id", async (req, res) => {
     }
 });
 
-router.put("/custos/:id", async (req, res) => {
+router.put("/:id", async (req, res) => {
     try {
         const {
             cobertura,
