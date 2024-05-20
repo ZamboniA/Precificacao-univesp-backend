@@ -4,7 +4,7 @@ const { PaoDeMel } = require("../../models/PaoDeMelSchema");
 const { Mousse } = require("../../models/MousseSchema");
 const { Brownie } = require("../../models/BrownieSchema");
 
-router.get("/todos-itens", async (req, res) => {
+router.get("/todositens", async (req, res) => {
     try {
         const brownies = await Brownie.find();
         const mousses = await Mousse.find();
